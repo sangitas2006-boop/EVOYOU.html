@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>EVOYOU - EVOLVE INTO YOUR BEST SELF</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Base styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: rgba(245, 245, 220, 1);
+            min-height: 100vh;
+        }
+
+        /* User-provided CSS for animation */
+        .scroll-animate {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+        }
+        .scroll-animate.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* User-provided CSS for Floating AI button */
+        #ai-fab {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 9999px;
+            background: #ffffff;
+            color: #b91c1c; /* red-ish like your accents */
+            border: 2px solid rgba(0,0,0,0.06);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 999;
+            transition: transform 0.12s ease;
+        }
+        #ai-fab:hover { transform: translateY(-4px); }
+
+        /* Logo styling for the Navbar */
+        .navbar-logo {
+            height: 90px;
+            width: auto;
+            /* Filter to make the logo lighter and grayscale for a clean look on dark background */
+            filter: brightness(2) contrast(1.5) grayscale(0.5);
+        }
+
+        /* General Utility Styles */
+        .hidden { display: none; }
+        .fixed { position: fixed; }
+        .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+        /* NOTE: white-space: pre-wrap is good for AI response area formatting */
+        #ai-response-area { white-space: pre-wrap; } 
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #9bd3eb;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.1s;
+        }
+        .task-item.completed .task-text {
+            text-decoration: line-through;
+            color: #6b7280; /* gray-500 */
+        }
+        
+        /* Responsive small tweaks */
+        @media (max-width: 640px) {
+            .text-8xl { font-size: 2.5rem; }
+        }
+        
+        /* Custom Hover Effect for AI Button in Navbar */
+        /* NOTE: You use hover:bg-red-500 in HTML, so I'll keep the text white on hover */
+        #ai-open-btn:hover {
+            color: #ffffff; /* Text color becomes white */
+        }
+
+        /* Settings Dropdown Styling */
+        #settings-dropdown {
+            position: absolute;
+            right: 0;
+            top: 100%; /* Position right below the button */
+            min-width: 180px;
+            z-index: 60; /* Higher than the rest of the content, but lower than modals */
+        }
+    </style>
+</head>
+
+<body class="text-black" style="background-color: rgb(225, 225, 220,);">
+
+    <header id="navbar-container" class="fixed top-0 left-0 right-0 z-50 bg-gray-800 shadow-lg transition duration-300">
+        <div class="max-w-7xl mx-auto px-0"> 
+            <div class="flex justify-between items-center h-34"> 
+                <div class="flex-shrink-0">
+                    <a href="#home" title="EVOYOU - Home" class="flex items-center space-x-0 pl-4 px-2 py-"> 
+                        <img src="C:\Users\91937\Downloads\Gemini_Generated_Image_em69rxem69rxem69.png"  alt="EVOYOU Logo" class="navbar-logo"/>
+                    </a>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#home" class="text-lg font-medium text-gray-200 hover:text-red-500 transition duration-150">Home</a>
+                    <a href="#dashboard-section" class="text-lg font-medium text-gray-200 hover:text-red-500 transition duration-150">Dashboard</a>
+                    <a href="#leaderboard-section" class="text-lg font-medium text-gray-200 hover:text-red-500 transition duration-150">Leaderboard</a>
+                    <a href="#feedback-content" class="text-lg font-medium text-gray-200 hover:text-red-500 transition duration-150">Feedback</a>
+                </nav>
+
+                <div class="flex items-center space-x-3 pr-4 relative"> 
+                    <button id="auth-open-btn" title="Log In" class="p-2 rounded-full hover:bg-gray-700 transition duration-150 cursor-pointer text-blue-400">Log In</button>
+                    
+                    <div class="relative inline-block text-left">
+                        <button id="settings-open-btn" title="Settings" class="p-2 rounded-full hover:bg-gray-700 transition duration-150 cursor-pointer text-gray-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
+                        <div id="settings-dropdown" class="origin-top-right absolute right-0 mt-2 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden">
+                            <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-red-500 transition duration-100" role="menuitem">Profile</a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-red-500 transition duration-100" role="menuitem">Account</a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-red-500 transition duration-100" role="menuitem">Notifications</a>
+                                <a href="#" id="settings-logout-btn" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition duration-100" role="menuitem">Log Out (Demo)</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="ai-open-btn" title="AI Assistant" class="p-2 rounded-full hover:bg-red-500 hover:text-white transition duration-150 cursor-pointer text-red-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M19 12h1m-1.636 6.364l-.707-.707M4 12H3m1.636 6.364l.707-.707M6.012 10.362a1 1 0 00.373-.801l-.774-3.138A6.364 6.364 0 0112 4.16V3a.5.5 0 01.5-.5h1a.5.5 0 01.5.5v1.16a6.364 6.364 0 015.429 5.429l-3.138.774a1 1 0 00-.8.373 6.364 6.364 0 01-4.8 11.235 6.364 6.364 0 01-1.294-.135" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main id="app-main" class="pt-28">
+        <section id="home" class="pt-32 pb-16 md:pt-40">
+            <div class="container mx-auto px-4 sm:px-3 lg:px-7 text-center">
+                <h2 class="text-5xl md:text-5xl font-extrabold text--400 leading-tight">
+                    <span class="text-1xl  text-red-500 "></span> <span class=" inline-block text-8xl bg px-2 py-"> ACHIEVE YOUR </span><span class=" inline font-extrabold text-8xl text-black px-"> DAILY GOALS </span>
+                </h2>
+
+                <p class="mt-8 text-4xl  font-bold text-gray-700 rock-600 max-w-10xl mx-auto"> 🕐 <u>
+                    SCHEDULE YOUR DAY IN THE BEST WAY POSSIBLE </u>🕐
+                </p>
+                <div class="mt-8 flex justify-center space-x-4">
+                    <a href="scheduler.html" target="_blank" class="px-8 py-3 text-lg font-bold rounded-lg bg-green-500 text-white shadow-xl hover:bg-red-600 transition duration-300 transform hover:-translate-y-0.5">
+                        Start Scheduling
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section id="dashboard-section" class="py-16 bg-white scroll-animate">
+            <div id="dashboard-content" class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h3 class=" inline-block text-6xl font-extrabold text-center bg- text-neutral-800 mb-16"> DASHBOARD </h3>
+                
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="p-6 rounded-xl shadow-lg bg-red-200 transition duration-300 hover:shadow-xl transform hover:scale-[1.02]">
+                        <h4 class="text-lg font-semibold text-gray-600">Daily Tasks 🎯</h4>
+                        <p id="tasks-completed-stat" class="mt-2 text-5xl font-extrabold text-red-700">0</p>
+                        <p id="tasks-total-stat" class="text-sm text-gray-800 mt-3">/0 Total Goals</p>
+                    </div>
+                    <div class="p-6 rounded-xl shadow-lg bg-red-400 transition duration-300 hover:shadow-xl transform hover:scale-[1.02]">
+                        <h4 class="text-lg font-semibold text-gray-600">STREAK SCORE 🔥</h4>
+                        <p class="mt-2 text-5xl font-extrabold text-gray-900">220</p>
+                        <p class="text-sm text-gray-500 mt-1">STREAK</p>
+                    </div>
+                    <div class="p-6 rounded-xl shadow-lg bg-yellow-300 transition duration-300 hover:shadow-xl transform hover:scale-[1.02]">
+                        <h4 class="text-lg font-semibold text-gray-600">Active Minutes ⏳</h4>
+                        <p class="mt-2 text-5xl font-extrabold text-gray-900">45</p>
+                        <p class="text-sm text-gray-500 mt-1">min</p>
+                    </div>
+                </div>
+
+                <div class="mt-16 bg-gray-50 p-6 md:p-10 rounded-xl shadow-2xl border border-gray-200">
+                    <h4 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-3">My Daily Goals</h4>
+                    <div id="task-list" class="space-y-4 min-h-[100px]">
+                        </div>
+
+                    <form id="add-task-form" class="mt-8 flex flex-col md:flex-row gap-4">
+                        <input type="text" id="task-input" placeholder="Enter new daily goal (e.g., Read for 30 min)" required class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 text-lg"/>
+                        <button type="submit" class="md:w-auto w-full px-6 py-3 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 transition duration-150">Add Goal</button>
+                    </form>
+                    <div id="auth-prompt" class="mt-4 text-center text-sm text-gray-600 hidden">
+                        <p>Sign in to save your goals permanently!</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section id="leaderboard-section" class="scroll-animate">
+            <div id="leaderboard-content" class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h3 class="text-4xl mt-16 text-center font-extrabold text-gray-600 mb-12"> Live Leaderboard 📈</h3>
+                <div class="max-w-xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden">
+                    <div class="flex justify-between items-center p-4 border-b bg-yellow-50">
+                        <div class="flex items-center space-x-4">
+                            <span class="text-xl font-bold text-yellow-600">1.</span>
+                            <span class="text-3xl">🥇</span>
+                            <span class="text-lg font-medium text-Blue-600">Alex Johnson</span>
+                        </div>
+                        <span class="text-xl font-extrabold text-black">12500 steps</span>
+                    </div>
+                    <div class="flex justify-between items-center p-4 border-b hover:bg-gray-100">
+                        <div class="flex items-center space-x-4">
+                            <span class="text-xl font-bold text-gray-500">2.</span>
+                            <span class="text-3xl">🥈</span>
+                            <span class="text-lg font-medium text-gray-700">Mia Chen</span>
+                        </div>
+                        <span class="text-xl font-extrabold text-black">11800 steps</span>
+                    </div>
+                    <div class="flex justify-between items-center p-4 border-b hover:bg-gray-100">
+                        <div class="flex items-center space-x-4">
+                            <span class="text-xl font-bold text-amber-700">3.</span>
+                            <span class="text-3xl">🥉</span>
+                            <span class="text-lg font-medium text-gray-700">David Lee</span>
+                        </div>
+                        <span class="text-xl font-extrabold text-black">10900 steps</span>
+                    </div>
+                    <div class="flex justify-between items-center p-4 hover:bg-gray-100">
+                        <div class="flex items-center space-x-4">
+                            <span class="text-xl font-bold text-gray-500">4.</span>
+                            <span class="text-4xl"> 🎖️</span>
+                            <span class="text-lg font-medium text-gray-700">Priya Sharma</span>
+                        </div>
+                        <span class="text-xl font-extrabold mt-">9500 steps</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section style="background-color: rgba(245, 245, 220, 1);" class="scroll-animate">
+            <div id="feedback-content" class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h3 class="mt-14 text-4xl font-bold text-center text-gray-800 mb-12">We Value Your Input</h3>
+                <div class="max-w-2xl mx-auto p-8 rounded-xl shadow-2xl bg-blue-600/10">
+                    <form id="feedback-form" class="space-y-4">
+                        <input
+                            type="text"
+                            id="feedback-name"
+                            placeholder="Your Name (Optional)"
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <textarea
+                            id="feedback-text"
+                            placeholder="Your Feedback"
+                            rows="4"
+                            required
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        ></textarea>
+                        <button
+                            type="submit"
+                            class="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-150"
+                        >
+                            Submit Feedback
+                        </button>
+                    </form>
+                    <div id="feedback-status" class="mt-4 text-center hidden"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p class="text-lg font-semibold mb-2"><u>EVOYOU</u></p>
+            <p class="text-sm text-gray-400">© 2025 All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <div id="auth-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-70 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl p-8 w-full max-w-md shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h4 id="auth-modal-title" class="text-2xl font-bold text-gray-800">Log In</h4>
+                <button id="auth-close-btn" class="text-gray-400 hover:text-gray-600 text-2xl font-semibold" aria-label="Close">&times;</button>
+            </div>
+            <div id="auth-message-box" class="hidden p-3 mb-4 rounded-lg text-sm"></div>
+            <form id="auth-form" class="space-y-4">
+                <input type="email" id="auth-email" placeholder="Email" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"/>
+                <input type="password" id="auth-password" placeholder="Password" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"/>
+                <button type="submit" id="auth-submit-btn" class="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-150 disabled:bg-blue-400">
+                    Log In
+                </button>
+            </form>
+            <p class="mt-6 text-center text-sm text-gray-600">
+                <span id="auth-toggle-text">Need an account?</span>
+                <button id="auth-toggle-btn" class="text-blue-600 font-medium hover:text-blue-700 ml-1">Sign Up</button>
+            </p>
+        </div>
+    </div>
+
+    <button id="ai-fab" title="Ask Evo-AI" aria-label="Ask Evo-AI">💬</button>
+
+    <div id="ai-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-70 z-[200] flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-lg shadow-2xl relative">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Evo-AI — Scheduling Assistant</h3>
+                <button id="ai-close" class="text-gray-400 hover:text-gray-600 text-2xl font-semibold" aria-label="Close">&times;</button>
+            </div>
+
+            <div id="ai-response-area" class="h-40 overflow-y-auto p-3 mb-4 border rounded-lg bg-gray-50 text-gray-700 text-sm">
+                Hello! I'm Evo-AI. Tell me what you need to schedule, or ask for a productivity tip! (e.g., "Give me a schedule for a busy student").
+            </div>
+
+            <form id="ai-form" class="space-y-3">
+                <textarea id="ai-input" placeholder="Ask Evo-AI for scheduling help..." rows="2" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 resize-none"></textarea>
+                <button type="submit" id="ai-submit-btn" class="w-full py-3 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 transition duration-150">Generate Schedule</button>
+            </form>
+
+            <div id="ai-status" class="mt-3 text-center text-sm hidden"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Demo-only script: no Firebase, offline-friendly.
+        
+        // ---------- Utility ----------
+        const $ = (sel) => document.querySelector(sel);
+        const $$ = (sel) => document.querySelectorAll(sel);
+
+        // Helper function to show messages (used in feedback form)
+        function showMessage(element, message, type) {
+            if (!element) return;
+            element.textContent = message;
+            element.className = `mt-4 text-center p-3 rounded-lg ${type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
+            element.classList.remove('hidden');
+        }
+
+        // Helper function to escape HTML for safety
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
+
+        // ---------- Scroll Animation ----------
+        const animateElements = document.querySelectorAll('.scroll-animate');
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('visible');
+            });
+        }, { threshold: 0.1 });
+        animateElements.forEach(el => observer.observe(el));
+
+        // ---------- AUTH MODAL (Demo) ----------
+        const authModal = $('#auth-modal');
+        const authCloseBtn = $('#auth-close-btn');
+        const authForm = $('#auth-form');
+        const authToggleBtn = $('#auth-toggle-btn');
+        const authModalTitle = $('#auth-modal-title');
+        const authMessageBox = $('#auth-message-box');
+
+        let isSigningUp = false;
+
+        function toggleAuthModal(show) {
+            if (!authModal) return;
+            authModal.classList.toggle('hidden', !show);
+            // We can rely on Tailwind's 'hidden' and the modal's 'flex' class
+        }
+
+        const headerOpen = $('#auth-open-btn');
+        if (headerOpen) headerOpen.addEventListener('click', () => toggleAuthModal(true));
+        if (authCloseBtn) authCloseBtn.addEventListener('click', () => toggleAuthModal(false));
+
+        // Toggle between Log In and Sign Up (demo)
+        if (authToggleBtn) {
+            authToggleBtn.addEventListener('click', () => {
+                isSigningUp = !isSigningUp;
+                authModalTitle.textContent = isSigningUp ? 'Sign Up' : 'Log In';
+                $('#auth-submit-btn').textContent = isSigningUp ? 'Sign Up' : 'Log In';
+                $('#auth-toggle-text').textContent = isSigningUp ? 'Already have an account?' : 'Need an account?';
+                authToggleBtn.textContent = isSigningUp ? 'Log In' : 'Sign Up';
+                authMessageBox.classList.add('hidden');
+            });
+        }
+
+        // Demo form submit: show success message, close modal
+        if (authForm) {
+            authForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                authMessageBox.classList.add('hidden');
+                const email = $('#auth-email').value;
+                
+                if (!email || email.indexOf('@') === -1) {
+                    authMessageBox.textContent = 'Please enter a valid email.';
+                    authMessageBox.className = 'p-3 mb-4 rounded-lg text-sm bg-red-100 text-red-700';
+                    authMessageBox.classList.remove('hidden');
+                    return;
+                }
+                
+                authMessageBox.textContent = isSigningUp ? 'Sign Up successful! (demo)' : 'Log In successful! (demo)';
+                authMessageBox.className = 'p-3 mb-4 rounded-lg text-sm bg-green-100 text-green-700';
+                authMessageBox.classList.remove('hidden');
+
+                setTimeout(() => toggleAuthModal(false), 900);
+            });
+        }
+
+        // ---------- DASHBOARD TASK MANAGEMENT (Mock Demo) ----------
+        
+        // Mock data structure
+        let mockTasks = [
+            { id: 1, text: 'Complete EVOYOU setup guide', completed: false },
+            { id: 2, text: 'Run 1 mile or 15 mins exercise', completed: true },
+            { id: 3, text: 'Deep work on project for 90 mins', completed: false }
+        ];
+        let nextTaskId = mockTasks.length + 1;
+
+        const taskList = $('#task-list');
+        const addTaskForm = $('#add-task-form');
+        const taskInput = $('#task-input');
+        const tasksCompletedStat = $('#tasks-completed-stat');
+        const tasksTotalStat = $('#tasks-total-stat');
+
+        // Render function to update the DOM and statistics
+        function renderTasks() {
+            // FIX: Clearing innerHTML now correctly handles the task list state.
+            taskList.innerHTML = ''; 
+            
+            // Check if there's a need to display the "no goals" message.
+            if (mockTasks.length === 0) {
+                taskList.innerHTML = '<p class="text-center text-gray-500 p-4">No goals added yet. Start evolving!</p>';
+            }
+
+            let completedCount = 0;
+            mockTasks.forEach(task => {
+                if (task.completed) completedCount++;
+
+                const taskDiv = document.createElement('div');
+                taskDiv.className = `task-item ${task.completed ? 'completed' : ''}`;
+                taskDiv.dataset.id = task.id;
+
+                taskDiv.innerHTML = `
+                    <div class="flex items-center space-x-3 flex-grow min-w-0">
+                        <input type="checkbox" ${task.completed ? 'checked' : ''} class="task-checkbox h-5 w-5 text-red-600 border-gray-300 rounded focus:ring-red-500 cursor-pointer">
+                        <span class="task-text text-lg font-medium text-gray-800 truncate">${escapeHtml(task.text)}</span>
+                    </div>
+                    <button class="delete-task-btn text-gray-400 hover:text-red-600 transition duration-150 p-1 rounded-full" title="Delete Goal">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                `;
+                taskList.appendChild(taskDiv);
+            });
+
+            tasksCompletedStat.textContent = completedCount;
+            tasksTotalStat.textContent = `/${mockTasks.length} Total Goals`;
+
+            // Attach event listeners after rendering
+            taskList.querySelectorAll('.task-checkbox').forEach(checkbox => {
+                checkbox.onchange = handleTaskToggle;
+            });
+            taskList.querySelectorAll('.delete-task-btn').forEach(button => {
+                button.onclick = handleDeleteTask;
+            });
+        }
+
+        // Toggle task completion
+        function handleTaskToggle(e) {
+            const taskId = parseInt(e.target.closest('.task-item').dataset.id);
+            const task = mockTasks.find(t => t.id === taskId);
+            if (task) {
+                task.completed = e.target.checked;
+                renderTasks();
+            }
+        }
+
+        // Delete task (using custom modal/confirm is better, but this uses native for simplicity)
+        function handleDeleteTask(e) {
+            const taskId = parseInt(e.target.closest('.task-item').dataset.id);
+            if (confirm('Are you sure you want to delete this goal?')) { 
+                mockTasks = mockTasks.filter(t => t.id !== taskId);
+                renderTasks();
+            }
+        }
+        
+        // Add new task
+        if (addTaskForm) {
+            addTaskForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const text = taskInput.value.trim();
+                if (text) {
+                    mockTasks.push({ id: nextTaskId++, text: text, completed: false });
+                    taskInput.value = '';
+                    renderTasks();
+                }
+            });
+        }
+
+        // ---------- FEEDBACK FORM (demo persistence-free) ----------
+        const feedbackForm = $('#feedback-form');
+        const feedbackStatus = $('#feedback-status');
+
+        if (feedbackForm) {
+            feedbackForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = $('#feedback-name').value.trim();
+                const text = $('#feedback-text').value.trim();
+
+                if (text.length < 5) {
+                    showMessage(feedbackStatus, 'Feedback is too short.', 'error');
+                    return;
+                }
+
+                // Simulate sending data
+                feedbackForm.querySelector('button[type="submit"]').disabled = true;
+                showMessage(feedbackStatus, 'Sending feedback...', 'info');
+
+                setTimeout(() => {
+                    showMessage(feedbackStatus, `Thank you, ${name || 'User'}! Your feedback has been received.`, 'success');
+                    feedbackForm.reset();
+                    feedbackForm.querySelector('button[type="submit"]').disabled = false;
+                }, 1500);
+            });
+        }
+
+        // ---------- AI MODAL (Demo) ----------
+        const aiFab = $('#ai-fab');
+        const aiOpenBtn = $('#ai-open-btn'); // New button in navbar
+        const aiModal = $('#ai-modal');
+        const aiClose = $('#ai-close');
+        const aiForm = $('#ai-form');
+        const aiInput = $('#ai-input');
+        const aiResponseArea = $('#ai-response-area');
+        const aiStatus = $('#ai-status');
+
+        const aiReplies = [
+            "A busy student schedule: Wake 7am, Class/Study Blocks (9-12, 1-4), 30 min exercise, 1 hr review, Sleep 11pm.",
+            "Productivity Tip: Use the 'Eat the Frog' method by tackling your hardest task first thing in the morning.",
+            "To schedule exercise, break it into smaller 15-minute bursts: one in the morning, one in the afternoon.",
+            "Try 'Time Blocking': Allocate specific blocks of time (e.g., 2 hours) for specific tasks, and stick to them strictly.",
+            "For deep work, schedule it for when you have the fewest distractions, usually early morning or late evening."
+        ];
+
+        function toggleAIModal(show) {
+            if (!aiModal) return;
+            aiModal.classList.toggle('hidden', !show);
+            // Ensure the focus goes to the input when opened for accessibility
+            if (show) aiInput.focus(); 
+        }
+
+        // Event listeners for opening and closing the AI modal
+        if (aiFab) aiFab.onclick = () => toggleAIModal(true);
+        if (aiOpenBtn) aiOpenBtn.onclick = () => toggleAIModal(true);
+        if (aiClose) aiClose.onclick = () => toggleAIModal(false);
+
+        if (aiForm) {
+            aiForm.onsubmit = (e) => {
+                e.preventDefault();
+                const q = aiInput.value.trim();
+                if (!q) return;
+                
+                // 1. Append user question
+                const userText = `<div class="mt-4 p-2 bg-blue-50 rounded-lg"><strong>You:</strong> ${escapeHtml(q)}</div>`;
+                
+                // 2. Append thinking message
+                const thinkingText = `<div class="mt-2 ai-thinking p-2 text-gray-500 italic"><em>AI:</em> Generating personalized schedule...</div>`;
+                aiResponseArea.innerHTML += userText + thinkingText;
+
+                aiInput.value = "";
+                aiResponseArea.scrollTop = aiResponseArea.scrollHeight; // Scroll to bottom
+
+                setTimeout(() => {
+                    const reply = aiReplies[Math.floor(Math.random()*aiReplies.length)];
+                    
+                    // 3. Find and replace the specific thinking message
+                    const thinkingElement = aiResponseArea.querySelector('.ai-thinking:last-child');
+                    if (thinkingElement) {
+                        thinkingElement.innerHTML = `<div class="p-2 bg-red-50 rounded-lg"><strong>AI:</strong> ${reply}</div>`;
+                        thinkingElement.classList.remove('ai-thinking', 'italic');
+                        thinkingElement.classList.remove('text-gray-500');
+                    }
+                    
+                    aiResponseArea.scrollTop = aiResponseArea.scrollHeight;
+                }, 1500); // 1.5 second delay for "thinking"
+            }
+        }
+
+        // ---------- SETTINGS DROPDOWN ----------
+        const settingsOpenBtn = $('#settings-open-btn');
+        const settingsDropdown = $('#settings-dropdown');
+
+        function toggleSettingsDropdown() {
+            if (settingsDropdown) {
+                settingsDropdown.classList.toggle('hidden');
+            }
+        }
+
+        if (settingsOpenBtn) settingsOpenBtn.addEventListener('click', toggleSettingsDropdown);
+
+        // Close dropdown if user clicks outside
+        document.addEventListener('click', (event) => {
+            if (settingsDropdown && !settingsDropdown.contains(event.target) && 
+                settingsOpenBtn && !settingsOpenBtn.contains(event.target) && 
+                !settingsDropdown.classList.contains('hidden')) {
+                settingsDropdown.classList.add('hidden');
+            }
+        });
+        
+        // ---------- INITIALIZATION ----------
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeMockTasks();
+        });
+    </script>
+</body>
+</html>
